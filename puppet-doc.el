@@ -3,6 +3,8 @@
 ;; Copyright 2011-2015 KURASHIKI Satoru
 
 ;; Author: KURASHIKI Satoru <lurdan@gmail.com>
+;; Version: 0.1
+;; URL: https://github.com/lurdan/emacs-puppet-doc
 ;; Keywords: puppet
 
 ;; This file is not part of GNU Emacs, but distributed under the same
@@ -41,12 +43,9 @@
 If you copy the puppet reference to your local system, set this variable
 to something like \"file:/usr/local/doc/puppet/\".")
 
-;; TODO: implement the way to refer local documentation.
-(defvar puppet-doc-root-local "/etc/puppet/doc")
-
 (defvar puppet-doc-index-file "~/.emacs.d/var/puppet-doc-index.el")
 
-(defvar puppet-doc-cache-dir "~/.emacs.d/var/puppet")
+(defvar puppet-doc-cache-dir "~/.emacs.d/var/puppet-doc")
 
 ;; variables for internal use
 
@@ -61,6 +60,8 @@ to something like \"file:/usr/local/doc/puppet/\".")
 
 (defun puppet-doc-init ()
   "Initialize internal settings."
+  (make-directory puppet-doc-cache-dir t)
+  (set-file-modes puppet-doc-cache-dir (file-modes user-emacs-directory))
   (with-temp-buffer
     (insert-file-contents puppet-doc-index-file)
     (setq puppet-doc-index (read (buffer-string))))
@@ -75,11 +76,12 @@ to something like \"file:/usr/local/doc/puppet/\".")
   (let* ((split-list (split-string url "#"))
          (url (nth 0 split-list))
          (anchor (nth 1 split-list))
-         (cache-file (concat (url-cache-create-filename url) ".html")))
+         (cache-file
+          (format "%s%s" puppet-doc-cache-dir
+                  (substring url (length puppet-doc-root)))))
     (unless (file-exists-p cache-file)
-      (url-cache-prepare cache-file)
       (url-copy-file url cache-file t t))
-    (concat "file://" cache-file "#" anchor)
+    (concat "file://" (expand-file-name cache-file) "#" anchor)
     ))
 
 ;;;###autoload
